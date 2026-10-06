@@ -5,10 +5,12 @@ import { FaCalendarCheck, FaCheck, FaEnvelopeOpen, FaTimes } from 'react-icons/f
 import EmptyState from '../../components/common/EmptyState';
 import { GridSkeleton } from '../../components/dashboard/Skeletons';
 import StatusBadge from '../../components/dashboard/StatusBadge';
+import { useAuth } from '../../context/AuthContext';
 import { propertyApi } from '../../services/propertyApi';
 import { formatDate, formatPrice } from '../../utils/format';
 
 const PropertyInquiriesPage = () => {
+  const { user } = useAuth();
   const [inquiries, setInquiries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState('');
@@ -42,7 +44,7 @@ const PropertyInquiriesPage = () => {
     <div>
       <div className="mb-6">
         <h1 className="text-xl font-heading font-bold text-ink">Property Booking Inquiries</h1>
-        <p className="text-sm text-muted mt-1">Requests from people interested in visiting your listings.</p>
+        <p className="text-sm text-muted mt-1">Manage requests you receive and track inquiries you send.</p>
       </div>
 
       {loading ? (
@@ -50,72 +52,82 @@ const PropertyInquiriesPage = () => {
       ) : inquiries.length === 0 ? (
         <EmptyState
           icon={FaEnvelopeOpen}
-          title="No property inquiries yet"
-          description="Visit requests for your approved properties will appear here."
+          title="No booking inquiries yet"
+          description="Inquiries you send and requests for your properties will appear here."
           action={<Link to="/properties" className="btn-secondary text-sm">Browse Properties</Link>}
         />
       ) : (
         <div className="space-y-4">
-          {inquiries.map((inquiry) => (
-            <article key={inquiry._id} className="card p-5">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  {inquiry.property ? (
-                    <Link to={`/properties/${inquiry.property.slug}`} className="font-semibold text-ink hover:text-primary">
-                      {inquiry.property.title}
-                    </Link>
-                  ) : (
-                    <h2 className="font-semibold text-ink">Property unavailable</h2>
-                  )}
-                  {inquiry.property && (
-                    <p className="text-sm text-muted mt-1">
-                      {inquiry.property.location?.city} · {formatPrice(inquiry.property)}
-                    </p>
-                  )}
-                </div>
-                <StatusBadge status={inquiry.status} />
-              </div>
+          {inquiries.map((inquiry) => {
+            const sentByMe = String(inquiry.requester?._id) === String(user?.id || user?._id);
+            const otherPerson = sentByMe ? inquiry.owner : inquiry.requester;
 
-              <div className="border-t border-border mt-4 pt-4">
-                <p className="text-sm font-medium text-ink">
-                  {inquiry.requester?.name || 'Account'}
-                  <span className="text-muted font-normal"> · {inquiry.requester?.role}</span>
-                </p>
-                <p className="text-sm text-muted mt-2">{inquiry.message}</p>
-                <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted mt-3">
-                  <span>Received {formatDate(inquiry.createdAt)}</span>
-                  {inquiry.preferredVisitDate && (
-                    <span className="inline-flex items-center gap-1.5">
-                      <FaCalendarCheck /> Requested visit {formatDate(inquiry.preferredVisitDate)}
+            return (
+              <article key={inquiry._id} className="card p-5">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    {inquiry.property ? (
+                      <Link to={`/properties/${inquiry.property.slug}`} className="font-semibold text-ink hover:text-primary">
+                        {inquiry.property.title}
+                      </Link>
+                    ) : (
+                      <h2 className="font-semibold text-ink">Property unavailable</h2>
+                    )}
+                    {inquiry.property && (
+                      <p className="text-sm text-muted mt-1">
+                        {inquiry.property.location?.city} · {formatPrice(inquiry.property)}
+                      </p>
+                    )}
+                    <span className={`inline-flex mt-2 rounded-full px-2.5 py-1 text-xs font-semibold ${sentByMe ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700'}`}>
+                      {sentByMe ? 'Sent by you' : 'Received for your property'}
                     </span>
-                  )}
-                  {inquiry.requester?.phone && <a href={`tel:${inquiry.requester.phone}`} className="text-primary">{inquiry.requester.phone}</a>}
-                  {inquiry.requester?.email && <a href={`mailto:${inquiry.requester.email}`} className="text-primary">{inquiry.requester.email}</a>}
-                </div>
-              </div>
+                  </div>
 
-              {inquiry.status === 'Pending' && (
-                <div className="flex gap-3 border-t border-border mt-4 pt-4">
-                  <button
-                    type="button"
-                    disabled={busyId === inquiry._id}
-                    onClick={() => updateStatus(inquiry._id, 'Accepted')}
-                    className="btn-primary text-sm"
-                  >
-                    <FaCheck /> Accept
-                  </button>
-                  <button
-                    type="button"
-                    disabled={busyId === inquiry._id}
-                    onClick={() => updateStatus(inquiry._id, 'Declined')}
-                    className="btn-secondary text-sm text-red-600"
-                  >
-                    <FaTimes /> Decline
-                  </button>
+                  <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+                    <StatusBadge status={inquiry.status} />
+                    {!sentByMe && inquiry.status === 'Pending' && (
+                      <>
+                        <button
+                          type="button"
+                          disabled={busyId === inquiry._id}
+                          onClick={() => updateStatus(inquiry._id, 'Accepted')}
+                          className="btn-primary text-sm"
+                        >
+                          <FaCheck /> Accept
+                        </button>
+                        <button
+                          type="button"
+                          disabled={busyId === inquiry._id}
+                          onClick={() => updateStatus(inquiry._id, 'Declined')}
+                          className="btn-secondary text-sm text-red-600"
+                        >
+                          <FaTimes /> Decline
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
-              )}
-            </article>
-          ))}
+
+                <div className="border-t border-border mt-4 pt-4">
+                  <p className="text-sm font-medium text-ink">
+                    {sentByMe ? 'To' : 'From'} {otherPerson?.name || 'Account'}
+                    <span className="text-muted font-normal"> · {otherPerson?.role}</span>
+                  </p>
+                  <p className="text-sm text-muted mt-2">{inquiry.message}</p>
+                  <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted mt-3">
+                    <span>{sentByMe ? 'Sent' : 'Received'} {formatDate(inquiry.createdAt)}</span>
+                    {inquiry.preferredVisitDate && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <FaCalendarCheck /> Requested visit {formatDate(inquiry.preferredVisitDate)}
+                      </span>
+                    )}
+                    {otherPerson?.phone && <a href={`tel:${otherPerson.phone}`} className="text-primary">{otherPerson.phone}</a>}
+                    {otherPerson?.email && <a href={`mailto:${otherPerson.email}`} className="text-primary">{otherPerson.email}</a>}
+                  </div>
+                </div>
+              </article>
+            );
+          })}
         </div>
       )}
     </div>

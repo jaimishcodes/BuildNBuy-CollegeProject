@@ -7,6 +7,7 @@ const {
   getMyProperties,
   createPropertyInquiry,
   getReceivedPropertyInquiries,
+  getPropertyInquiries,
   updatePropertyInquiryStatus,
   updateProperty,
   deleteProperty,
@@ -21,15 +22,16 @@ router.get('/admin/all', protect, authorize('admin'), adminGetProperties);
 router.put('/:id/moderate', protect, authorize('admin'), moderateProperty);
 
 router.get('/mine', protect, getMyProperties);
+router.get('/inquiries', protect, authorize('customer', 'contractor'), getPropertyInquiries);
 router.get('/inquiries/received', protect, authorize('customer', 'contractor'), getReceivedPropertyInquiries);
 router.put('/inquiries/:inquiryId/status', protect, authorize('customer', 'contractor'), updatePropertyInquiryStatus);
 
 router.route('/')
   .get(optionalAuth, getProperties)
-  .post(protect, authorize('customer', 'contractor'), uploadPropertyImages.array('images', 10), createProperty);
+  .post(protect, authorize('customer'), uploadPropertyImages.array('images', 10), createProperty);
 
 router.route('/:id')
-  .put(protect, authorize('customer', 'contractor', 'admin'), uploadPropertyImages.array('images', 10), updateProperty)
+  .put(protect, authorize('customer', 'admin'), uploadPropertyImages.array('images', 10), updateProperty)
   .delete(protect, deleteProperty);
 
 router.post('/:id/inquiries', protect, authorize('customer', 'contractor'), createPropertyInquiry);

@@ -25,4 +25,5 @@ const propertyInquirySchema = new mongoose.Schema(
 propertyInquirySchema.index({ owner: 1, ownerModel: 1, createdAt: -1 });
 propertyInquirySchema.index({ requester: 1, property: 1, status: 1 });
 
-module.exports = mongoose.model('PropertyInquiry', propertyInquirySchema);
+// Keep this collection name aligned with the Booking inquiries collection in Atlas.
+module.exports = mongoose.model('PropertyInquiry', propertyInquirySchema, 'Booking inquiries');

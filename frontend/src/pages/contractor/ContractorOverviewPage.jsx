@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FaHome, FaHardHat, FaStar } from 'react-icons/fa';
+import { FaHardHat, FaStar } from 'react-icons/fa';
 import StatCard from '../../components/dashboard/StatCard';
 import VerificationBanner from '../../components/dashboard/VerificationBanner';
 import { useAuth } from '../../context/AuthContext';
 import { contractorApi } from '../../services/contractorApi';
-import { propertyApi } from '../../services/propertyApi';
 import { requirementApi } from '../../services/resourceApi';
 import { getInitials } from '../../utils/format';
 
@@ -13,7 +12,7 @@ const ContractorOverviewPage = () => {
   const { user } = useAuth();
   const [profile, setProfile] = useState(null);
   const [avatarError, setAvatarError] = useState(false);
-  const [stats, setStats] = useState({ properties: 0, requirements: 0 });
+  const [requirementsCount, setRequirementsCount] = useState(0);
   const avatarUrl = profile?.user?.avatar?.url || user?.avatar?.url || '';
 
   useEffect(() => {
@@ -22,15 +21,9 @@ const ContractorOverviewPage = () => {
 
   useEffect(() => {
     contractorApi.me().then(({ data }) => setProfile(data.data)).catch(() => {});
-    Promise.all([
-      propertyApi.mine(),
-      requirementApi.received(),
-    ]).then(([props, requirements]) => {
-      setStats({
-        properties: props.data.data.length,
-        requirements: requirements.data.data.length,
-      });
-    }).catch(() => {});
+    requirementApi.received()
+      .then(({ data }) => setRequirementsCount(data.data.length))
+      .catch(() => {});
   }, []);
 
   return (
@@ -56,9 +49,8 @@ const ContractorOverviewPage = () => {
 
       {profile && <VerificationBanner status={profile.verificationStatus} rejectionReason={profile.rejectionReason} />}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={FaHome} label="Properties Listed" value={stats.properties} />
-        <StatCard icon={FaHardHat} label="Construction Requirements" value={stats.requirements} accent="text-accent" delay={0.05} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <StatCard icon={FaHardHat} label="Construction Requirements" value={requirementsCount} accent="text-accent" delay={0.05} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">

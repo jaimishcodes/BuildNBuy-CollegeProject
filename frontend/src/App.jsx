@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
 import MainLayout from './layouts/MainLayout';
@@ -100,10 +100,10 @@ function App() {
           <Route path="dashboard" element={<ContractorOverviewPage />} />
           <Route path="profile" element={<ContractorProfilePage />} />
           <Route path="past-work" element={<PastWorkPage />} />
-          <Route path="properties" element={<MyPropertiesPage listPropertyPath="/contractor/list-property" editPropertyPath="/contractor/edit-property" />} />
-          <Route path="property-inquiries" element={<PropertyInquiriesPage />} />
-          <Route path="list-property" element={<ListPropertyPage redirectTo="/contractor/properties" />} />
-          <Route path="edit-property/:id" element={<EditPropertyPage redirectTo="/contractor/properties" />} />
+          <Route path="properties" element={<Navigate to="/contractor/dashboard" replace />} />
+          <Route path="property-inquiries" element={<Navigate to="/contractor/dashboard" replace />} />
+          <Route path="list-property" element={<Navigate to="/contractor/dashboard" replace />} />
+          <Route path="edit-property/:id" element={<Navigate to="/contractor/dashboard" replace />} />
           <Route path="requirements" element={<ReceivedRequirementsPage />} />
         </Route>
 

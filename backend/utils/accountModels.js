@@ -11,13 +11,28 @@ const findAccountsByEmail = async (email, includePassword = false) => {
   });
 
   const matches = (await Promise.all(queries)).filter(Boolean);
-  if (matches.length <= 1) return matches;
 
-  const adminMatch = matches.find((account) => account.role === 'admin' && account.constructor.modelName === 'Admin')
-    || matches.find((account) => account.role === 'admin');
+  // Ignore a legacy `users` copy when the same account was already copied to
+  // its role collection. Distinct accounts sharing an email remain ambiguous.
+  const uniqueMatches = matches.filter((account, index) => {
+    const roleModel = accountModels[account.role];
+    const isRoleCollectionCopy = roleModel && account.constructor.modelName === roleModel.modelName;
+    if (isRoleCollectionCopy) return true;
+
+    return !matches.some((other, otherIndex) => otherIndex !== index
+      && String(other._id) === String(account._id)
+      && other.role === account.role
+      && other.email?.trim().toLowerCase() === account.email?.trim().toLowerCase()
+      && accountModels[other.role]
+      && other.constructor.modelName === accountModels[other.role].modelName);
+  });
+  if (uniqueMatches.length <= 1) return uniqueMatches;
+
+  const adminMatch = uniqueMatches.find((account) => account.role === 'admin' && account.constructor.modelName === 'Admin')
+    || uniqueMatches.find((account) => account.role === 'admin');
   if (adminMatch) return [adminMatch];
 
-  return matches;
+  return uniqueMatches;
 };
 
 const findAccountById = async (id, role) => {
@@ -34,6 +49,18 @@ const moveLegacyAccount = async (account) => {
     $or: [{ _id: account._id }, { email: account.email }],
   });
   if (conflictingAccount) {
+    // A previous migration may have copied the account and then failed before
+    // removing it from `users`. Treat that exact same account as an already
+    // completed migration so login/reset can proceed on subsequent attempts.
+    const isSameMigratedAccount = String(conflictingAccount._id) === String(account._id)
+      && conflictingAccount.role === account.role
+      && conflictingAccount.email?.trim().toLowerCase() === account.email?.trim().toLowerCase();
+
+    if (isSameMigratedAccount) {
+      await account.constructor.collection.deleteOne({ _id: account._id });
+      return conflictingAccount;
+    }
+
     const ApiError = require('./ApiError');
     throw new ApiError(409, 'This account exists in multiple collections. Contact support.');
   }

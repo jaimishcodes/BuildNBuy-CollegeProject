@@ -218,6 +218,22 @@ const getReceivedPropertyInquiries = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, inquiries, 'Property inquiries fetched'));
 });
 
+const getPropertyInquiries = asyncHandler(async (req, res) => {
+  const accountModel = req.user.role === 'contractor' ? 'ContractorUser' : 'User';
+  const inquiries = await PropertyInquiry.find({
+    $or: [
+      { owner: req.user._id, ownerModel: accountModel },
+      { requester: req.user._id, requesterModel: accountModel },
+    ],
+  })
+    .populate('property', 'title slug location.city price listingType images')
+    .populate('requester', 'name email phone role avatar')
+    .populate('owner', 'name email phone role avatar')
+    .sort({ createdAt: -1 });
+
+  res.status(200).json(new ApiResponse(200, inquiries, 'Property inquiries fetched'));
+});
+
 const updatePropertyInquiryStatus = asyncHandler(async (req, res) => {
   const { status } = req.body;
   if (!['Accepted', 'Declined'].includes(status)) {
@@ -242,6 +258,10 @@ const updatePropertyInquiryStatus = asyncHandler(async (req, res) => {
 // @route   PUT /api/properties/:id
 // @access  Private (owner only)
 const updateProperty = asyncHandler(async (req, res) => {
+  if (req.user.role === 'contractor') {
+    throw new ApiError(403, 'Contractors cannot list or manage sale and rental properties');
+  }
+
   const property = await Property.findById(req.params.id);
   if (!property) throw new ApiError(404, 'Property not found');
 
@@ -312,6 +332,10 @@ const updateProperty = asyncHandler(async (req, res) => {
 // @route   DELETE /api/properties/:id
 // @access  Private (owner or admin)
 const deleteProperty = asyncHandler(async (req, res) => {
+  if (req.user.role === 'contractor') {
+    throw new ApiError(403, 'Contractors cannot list or manage sale and rental properties');
+  }
+
   const property = await Property.findById(req.params.id);
   if (!property) throw new ApiError(404, 'Property not found');
 
@@ -380,6 +404,7 @@ module.exports = {
   getMyProperties,
   createPropertyInquiry,
   getReceivedPropertyInquiries,
+  getPropertyInquiries,
   updatePropertyInquiryStatus,
   updateProperty,
   deleteProperty,

@@ -1,0 +1,16 @@
+export const majorIndianCities = [
+  'Agartala', 'Agra', 'Ahmedabad', 'Aizawl', 'Ajmer', 'Aligarh', 'Allahabad',
+  'Amravati', 'Amritsar', 'Asansol', 'Aurangabad', 'Bareilly', 'Belgaum',
+  'Bengaluru', 'Bhiwandi', 'Bhopal', 'Bhubaneswar', 'Bikaner', 'Bilaspur',
+  'Chandigarh', 'Chennai', 'Coimbatore', 'Cuttack', 'Dehradun', 'Delhi',
+  'Dhanbad', 'Durgapur', 'Faridabad', 'Firozabad', 'Ghaziabad', 'Gorakhpur',
+  'Greater Noida', 'Guntur', 'Gurugram', 'Guwahati', 'Gwalior', 'Howrah',
+  'Hubballi', 'Hyderabad', 'Imphal', 'Indore', 'Itanagar', 'Jabalpur', 'Jaipur',
+  'Jalandhar', 'Jammu', 'Jamnagar', 'Jamshedpur', 'Jhansi', 'Jodhpur', 'Kanpur',
+  'Kochi', 'Kolhapur', 'Kolkata', 'Kota', 'Kozhikode', 'Lucknow', 'Ludhiana',
+  'Madurai', 'Mangaluru', 'Meerut', 'Mumbai', 'Mysuru', 'Nagpur', 'Nashik',
+  'Navi Mumbai', 'Noida', 'Panaji', 'Patna', 'Pune', 'Prayagraj', 'Puducherry',
+  'Raipur', 'Rajkot', 'Ranchi', 'Rourkela', 'Shillong', 'Shimla', 'Siliguri',
+  'Srinagar', 'Surat', 'Thane', 'Thiruvananthapuram', 'Tiruchirappalli', 'Udaipur',
+  'Vadodara', 'Varanasi', 'Vijayawada', 'Visakhapatnam', 'Warangal',
+];
